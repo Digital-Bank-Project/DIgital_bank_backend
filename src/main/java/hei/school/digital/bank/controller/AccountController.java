@@ -2,6 +2,8 @@ package hei.school.digital.bank.controller;
 
 import hei.school.digital.bank.model.Account;
 import hei.school.digital.bank.service.AccountService;
+import java.util.List;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,15 @@ public class AccountController {
     return new ResponseEntity<>(createdAccount, HttpStatus.CREATED);
   }
 
+  public ResponseEntity<List<Account>> getAllAccounts() {
+    List<Account> accounts = accountService.getAllAccounts();
+    if (!accounts.isEmpty()) {
+      return new ResponseEntity<>(accounts, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+  }
+
   @GetMapping("/{id}")
   public ResponseEntity<Account> getAccountById(@PathVariable Long id) {
     Account account = accountService.getAccountById(id);
@@ -39,14 +50,20 @@ public class AccountController {
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<Account> updateAccount(@PathVariable Long id) {
-    Account updatedAccount = accountService.updateAccount(id);
+  public ResponseEntity<Account> updateAccount(@PathVariable Long id, @RequestBody Account account) {
+    if (!Objects.equals(id, account.getId())) {
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    Account updatedAccount = accountService.updateAccount(account);
+
     if (updatedAccount != null) {
       return new ResponseEntity<>(updatedAccount, HttpStatus.OK);
     } else {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
   }
+
 
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteAccountById(@PathVariable Long id) {

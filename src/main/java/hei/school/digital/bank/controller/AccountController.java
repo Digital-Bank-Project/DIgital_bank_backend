@@ -30,6 +30,7 @@ public class AccountController {
     return new ResponseEntity<>(createdAccount, HttpStatus.CREATED);
   }
 
+  @GetMapping
   public ResponseEntity<List<Account>> getAllAccounts() {
     List<Account> accounts = accountService.getAllAccounts();
     if (!accounts.isEmpty()) {

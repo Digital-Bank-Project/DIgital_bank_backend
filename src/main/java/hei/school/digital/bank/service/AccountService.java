@@ -3,6 +3,7 @@ package hei.school.digital.bank.service;
 import hei.school.digital.bank.model.Account;
 import hei.school.digital.bank.repository.AccountRepository;
 import hei.school.digital.bank.utils.AccountNumberGenerator;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,13 +20,25 @@ public class AccountService {
     return accountRepository.create(account);
   }
 
+  public List<Account> getAllAccounts(){
+    return accountRepository.findAll();
+  }
+
   public Account getAccountById(Long id) {
     return accountRepository.findById(id);
   }
 
-  public Account updateAccount(Long id) {
-    return accountRepository.update(id);
+  public Account updateAccount(Account account) {
+    Account accountToUpdate = accountRepository.findById(account.getId());
+
+    if (accountToUpdate != null) {
+      return accountRepository.update(account);
+    } else {
+      System.out.println("Account with ID " + account.getId() + " not found.");
+      return null;
+    }
   }
+
 
   public void deleteAccountById(Long id) {
     accountRepository.deleteById(id);

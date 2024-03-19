@@ -8,6 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -49,6 +51,34 @@ public class AccountRepository implements CrudOperations<Account,Long> {
     return entity;
   }
 
+  @Override
+  public List<Account> findAll() {
+    List<Account> accounts = new ArrayList<>();
+
+    try (Connection connection = PostgresDbConnection.getConnection()) {
+      String sql = "SELECT * FROM account";
+      PreparedStatement statement = connection.prepareStatement(sql);
+      ResultSet resultSet = statement.executeQuery();
+
+      while (resultSet.next()) {
+        Account account = new Account();
+        account.setId(resultSet.getLong("id"));
+        account.setFirstName(resultSet.getString("firstName"));
+        account.setLastName(resultSet.getString("lastName"));
+        account.setDateOfBirth(resultSet.getDate("dateOfBirth"));
+        account.setPrincipalBalance(resultSet.getDouble("principalBalance"));
+        account.setMonthlySalary(resultSet.getDouble("monthlySalary"));
+        account.setAccountNumber(resultSet.getString("accountNumber"));
+        account.setAccountStatus(Account.AccountStatus.valueOf(resultSet.getString("accountStatus")));        // Assurez-vous de récupérer les autres attributs de l'Account de manière similaire
+        accounts.add(account);
+      }
+    } catch (SQLException ex) {
+      ex.printStackTrace();
+    }
+
+    return accounts;
+  }
+
 
   @Override
   public Account findById(Long id) {
@@ -85,36 +115,35 @@ public class AccountRepository implements CrudOperations<Account,Long> {
 
 
   @Override
-  public Account update(Long id) {
-    Account accountToUpdate = findById(id);
+  public Account update(Account entity) {
+    try (Connection connection = PostgresDbConnection.getConnection();
+         PreparedStatement preparedStatement = connection.prepareStatement(
+             "UPDATE account SET firstName = ?, lastName = ?, dateOfBirth = ?, principalBalance = ?, monthlySalary = ?, accountNumber = ?, accountStatus = ? WHERE id = ?")) {
 
-    if (accountToUpdate != null) {
-      try {
-        Connection connection = PostgresDbConnection.getConnection();
+      preparedStatement.setString(1, entity.getFirstName());
+      preparedStatement.setString(2, entity.getLastName());
+      preparedStatement.setDate(3, new java.sql.Date(entity.getDateOfBirth().getTime()));
+      preparedStatement.setDouble(4, entity.getPrincipalBalance());
+      preparedStatement.setDouble(5, entity.getMonthlySalary());
+      preparedStatement.setString(6, entity.getAccountNumber());
+      preparedStatement.setString(7, entity.getAccountStatus().toString());
+      preparedStatement.setLong(8, entity.getId());
 
-        // Mettre à jour le statut du compte (par exemple : activer/désactiver)
-        String sql = "UPDATE account SET accountStatus = ? WHERE id = ?";
-        PreparedStatement statement = connection.prepareStatement(sql);
-        statement.setString(1, Account.AccountStatus.ACTIVATED.toString());
-        statement.setLong(2, id);
+      int rowsUpdated = preparedStatement.executeUpdate();
 
-        int rowsUpdated = statement.executeUpdate();
-
-        if (rowsUpdated > 0) {
-          accountToUpdate.setAccountStatus(Account.AccountStatus.ACTIVATED);
-          return accountToUpdate;
-        } else {
-          System.out.println("The account with the ID "+ id +" does not exist.");
-        }
-      } catch (SQLException ex) {
-        ex.printStackTrace();
+      if (rowsUpdated > 0) {
+        System.out.println("Account updated successfully.");
+        return entity;
+      } else {
+        System.out.println("Failed to update account with ID " + entity.getId() + ".");
       }
-    } else {
-      System.out.println("The account with the ID "+ id +" does not exist.");
+    } catch (SQLException e) {
+      e.printStackTrace();
     }
 
     return null;
   }
+
 
 
   @Override

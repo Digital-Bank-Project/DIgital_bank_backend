@@ -1,5 +1,6 @@
 package hei.school.digital.bank.model;
 
+import java.sql.Timestamp;
 import java.util.Date;
 import lombok.AllArgsConstructor;
 
@@ -23,11 +24,16 @@ public class Account {
   private double principalBalance;
   private double monthlySalary;
   private String accountNumber;
-  private AccountStatus accountStatus;
+  private boolean overdraftEnabled;
+  private double overdraftInterest;
+  private OverdraftInterest interestDetails;
+  private Timestamp overdraftStartDate;
+  private Bank bank;
 
-  public enum AccountStatus {
-    ACTIVATED,
-    DEACTIVATED
+  public enum Bank {
+    BMOI,
+    BNI,
+    BFV
   }
 
 }

@@ -18,6 +18,7 @@ public class Transaction {
   @Id
   private Long id;
   private double amount;
+  private String motive;
   private LocalDateTime dateTime;
   private TransactionType type;
   private Long accountId;

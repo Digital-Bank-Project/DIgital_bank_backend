@@ -80,5 +80,17 @@ public class TransactionController {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
   }
+  @PostMapping("/deposit/{accountId}")
+  public ResponseEntity<String> depositAmount(@PathVariable Long accountId,
+                                              @RequestParam double amount,
+                                              @RequestParam String reason) {
+    try {
+      transactionService.depositAmount(accountId, amount, reason);
+      return ResponseEntity.ok("Amount deposited successfully.");
+    } catch (AccountNotFoundException e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+  }
+
 
 }

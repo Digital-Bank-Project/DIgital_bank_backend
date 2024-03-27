@@ -165,5 +165,26 @@ public class BalanceHistoryRepository implements CrudOperations<BalanceHistory,L
     return balanceHistories;
   }
 
+  public BalanceHistory findLastBalanceHistoryByAccountId(Long accountId) {
+    String sql = "SELECT * FROM balanceHistory WHERE accountId = ? ORDER BY timestamp DESC LIMIT 1";
+    try (Connection connection = PostgresDbConnection.getConnection();
+         PreparedStatement statement = connection.prepareStatement(sql)) {
+      statement.setLong(1, accountId);
+      ResultSet resultSet = statement.executeQuery();
+      if (resultSet.next()) {
+        BalanceHistory balanceHistory = new BalanceHistory();
+        balanceHistory.setId(resultSet.getLong("id"));
+        balanceHistory.setAccountId(resultSet.getLong("accountId"));
+        balanceHistory.setPrincipalBalance(resultSet.getDouble("principalBalance"));
+        balanceHistory.setLoanAmount(resultSet.getDouble("loanAmount"));
+        balanceHistory.setInterestAmount(resultSet.getDouble("interestAmount"));
+        balanceHistory.setTimestamp(resultSet.getTimestamp("timestamp").toLocalDateTime());
+        return balanceHistory;
+      }
+    } catch (SQLException ex) {
+      ex.printStackTrace();
+    }
+    return null;
+  }
 
 }

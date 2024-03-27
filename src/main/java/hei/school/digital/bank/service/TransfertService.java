@@ -270,5 +270,32 @@ public class TransfertService {
     processPendingTransfer(transfert);
   }
 
+  public void cancelTransfer(Transfert transfer) {
+    // Vérifier si le transfert existe
+    if (transfer == null) {
+      throw new IllegalArgumentException("Transfer object cannot be null");
+    }
+
+    // Vérifier si le statut du transfert est "Pending"
+    if (transfer.getStatus() == Transfert.TransfertStatus.PENDING) {
+      // Mettre à jour le statut du transfert en "Canceled"
+      transfer.setStatus(Transfert.TransfertStatus.CANCELLED);
+      updateTransfert(transfer);
+
+
+      // Supprimer le transfert de la base de données si nécessaire
+      deleteTransfertById(transfer.getId());
+
+      TransfertHistory transfertHistory = new TransfertHistory();
+      transfertHistory.setTransferId(transfer.getId());
+      transfertHistory.setTransfertStatus(TransfertHistory.TransfertHistoryStatus.CANCELlED);
+      transfertHistoryService.createTransfertHistory(transfertHistory);
+    } else {
+      // Le transfert ne peut être annulé que s'il est en attente (Pending)
+      throw new IllegalStateException("Transfer cannot be canceled because it's not in pending state.");
+    }
+  }
+
+
 }
 

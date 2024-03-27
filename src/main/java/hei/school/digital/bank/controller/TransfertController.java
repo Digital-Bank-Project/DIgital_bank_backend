@@ -73,4 +73,16 @@ public class TransfertController {
     }
   }
 
+  @PostMapping("/cancel")
+  public ResponseEntity<String> cancelTransfer(@RequestBody Transfert transfer) {
+    try {
+      transfertService.cancelTransfer(transfer);
+      return ResponseEntity.ok("Transfer canceled successfully.");
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(e.getMessage());
+    } catch (IllegalStateException e) {
+      return ResponseEntity.badRequest().body(e.getMessage());
+    }
+  }
+
 }

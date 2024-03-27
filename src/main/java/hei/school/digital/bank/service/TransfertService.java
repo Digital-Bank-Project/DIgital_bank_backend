@@ -296,6 +296,9 @@ public class TransfertService {
     }
   }
 
+  public List<Transfert> findTransfersBySenderAccountId(Long accountId) {
+    return transfertRepository.findTransfersBySenderAccountId(accountId);
+  }
 
 }
 

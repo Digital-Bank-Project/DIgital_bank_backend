@@ -63,6 +63,14 @@ public class TransfertController {
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
-
+  @PostMapping("/transferts")
+  public void transferProcess(@RequestBody Transfert transfer) {
+    try {
+      transfertService.manageTransfer(transfer);
+    } catch (InsufficientFundsException e) {
+      System.out.println("Insufficient funds to process the transfers.");
+      e.printStackTrace();
+    }
+  }
 
 }

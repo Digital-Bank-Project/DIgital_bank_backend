@@ -85,4 +85,15 @@ public class TransfertController {
     }
   }
 
+  @GetMapping("/transfers/sender/{accountId}")
+  public ResponseEntity<List<Transfert>> findTransfersBySenderAccountId(@PathVariable Long accountId) {
+    List<Transfert> transferts = transfertService.findTransfersBySenderAccountId(accountId);
+    if (!transferts.isEmpty()) {
+      return new ResponseEntity<>(transferts, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+  }
+
+
 }

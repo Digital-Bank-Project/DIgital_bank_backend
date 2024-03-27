@@ -69,5 +69,16 @@ public class TransactionController {
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  @PostMapping("/withdraw/{accountId}")
+  public ResponseEntity<String> withdrawAmount(@PathVariable Long accountId, @RequestParam double amount, @RequestParam String motive) {
+    try {
+      transactionService.withdrawAmount(accountId, amount, motive);
+      return ResponseEntity.ok("Withdrawal successful.");
+    } catch (AccountNotFoundException e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    } catch (InsufficientFundsException e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+  }
 
 }

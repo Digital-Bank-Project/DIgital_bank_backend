@@ -69,6 +69,35 @@ public class TransfertService {
     transfertRepository.deleteById(id);
   }
 
+  public void manageTransfer(Transfert transfert) throws InsufficientFundsException {
+    if (transfert == null) {
+      throw new IllegalArgumentException("Transfer object cannot be null");
+    }
+
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime dateEffet = transfert.getEffectiveDate();
+
+    // Vérifier si la date d'effet du transfert est ultérieure à la date actuelle
+    if (now.isBefore(dateEffet)) {
+      // La date d'effet n'est pas encore arrivée, enregistrer le transfert avec le statut "PENDING"
+      transfert.setStatus(Transfert.TransfertStatus.PENDING);
+      updateTransfert(transfert);
+
+      // Planifier le transfert pour la date d'effet spécifiée
+      planifierTransfert(transfert, dateEffet);
+    } else {
+      // La date d'effet est passée ou égale à la date actuelle, traiter le transfert immédiatement
+      List<Long> recipientAccountIds = Collections.singletonList(transfert.getRecipientAccountId());
+      if (recipientAccountIds.size() == 1) {
+        // Il n'y a qu'un seul compte destinataire
+        processPendingTransfer(transfert);
+      } else {
+        // Plusieurs comptes destinataires
+        processMultipleTransfers(transfert.getSenderAccountId(), recipientAccountIds, transfert.getAmount());
+      }
+    }
+  }
+
 
   public void processPendingTransfer(Transfert transfer) throws InsufficientFundsException {
     if (transfer != null) {
@@ -214,7 +243,32 @@ public class TransfertService {
     }
   }
 
+  public void processPlanifierTask() {
+    List<Transfert> pendingTransfers = getPendingTransfers();
 
+    for (Transfert transfer : pendingTransfers) {
+      LocalDateTime now = LocalDateTime.now();
+      LocalDateTime effectiveDate = transfer.getEffectiveDate();
+
+      // Vérifier si la date d'exécution prévue est passée
+      if (effectiveDate.isBefore(now)) {
+        planifierTransfertTask(transfer);
+      }
+    }
+  }
+
+  public List<Transfert> getPendingTransfers() {
+    LocalDateTime now = LocalDateTime.now();
+    return transfertRepository.findTransfersByEffectiveDateBeforeAndStatus(now, Transfert.TransfertStatus.PENDING);
+  }
+
+  public void planifierTransfert(Transfert transfert, LocalDateTime dateEffet) {
+    transfertScheduler.planifier(transfert,dateEffet);
+  }
+
+  public void planifierTransfertTask(Transfert transfert) {
+    processPendingTransfer(transfert);
+  }
 
 }
 

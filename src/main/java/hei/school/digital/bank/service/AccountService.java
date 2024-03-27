@@ -66,8 +66,100 @@ public class AccountService {
     }
   }
 
+
   public void deleteAccountById(Long id) {
     accountRepository.deleteById(id);
   }
+
+  public void withdrawFromAccount(Account account, double amount) {
+    double balance = account.getPrincipalBalance();
+
+    // Perform withdrawal normally
+    if (balance >= amount) {
+      account.setPrincipalBalance(balance - amount);
+      updateAccount(account);
+    } else if (account.isOverdraftEnabled()) {
+      double authorizedCredit = calculateAuthorizedCredit(account);
+      double availableBalance = balance + authorizedCredit;
+
+      // Check if withdrawal exceeds authorized balance
+      if (availableBalance >= amount) {
+        // Withdraw with overdraft
+        account.setPrincipalBalance(0);
+        updateAccount(account);
+        double remainingAmount = amount - balance;
+
+        // Add loan amount to balance history
+        addToBalanceHistory(account, remainingAmount);
+
+        // Record overdraft start date if balance becomes negative
+        if (balance >= 0 && hasNegativeBalance(account)) {
+          Timestamp overdraftStartDate = new Timestamp(System.currentTimeMillis());
+          account.setOverdraftStartDate(overdraftStartDate);
+          updateAccount(account);
+        }
+      } else {
+        throw new InsufficientFundsException("Insufficient funds to complete the withdrawal.");
+      }
+    } else {
+      throw new InsufficientFundsException("Insufficient funds to complete the withdrawal.");
+    }
+
+    // Apply overdraft interest if balance is negative and overdraft start date is recorded
+    BalanceHistory lastBalanceHistoryOptional = balanceHistoryService.findLastBalanceHistoryByAccountId(account.getId());
+
+    if (lastBalanceHistoryOptional.getLoanAmount() > 0 && account.getOverdraftStartDate() != null) {
+      LocalDate currentDate = LocalDate.now();
+      Timestamp overdraftStartDate = account.getOverdraftStartDate();
+      long daysOverdrawn = ChronoUnit.DAYS.between(overdraftStartDate.toLocalDateTime().toLocalDate(), currentDate);
+
+      // Calculate overdraft interest based on number of days
+      double interestRate;
+      if (daysOverdrawn <= 7) {
+        interestRate = account.getInterestDetails().getInterestRateForFirst7Days();
+      } else {
+        interestRate = account.getInterestDetails().getInterestRateAfter7Days();
+      }
+      double overdraftInterest = account.getPrincipalBalance() * (interestRate / 100);
+
+      // Add overdraft interest to account balance
+      account.setPrincipalBalance(account.getPrincipalBalance() + overdraftInterest);
+      updateAccount(account);
+    }
+  }
+
+  public double calculateAuthorizedCredit(Account account) {
+    double monthlySalary = account.getMonthlySalary();
+
+    double authorizedCredit = monthlySalary / 3.0;
+
+    return authorizedCredit;
+  }
+
+  // Add transaction to balance history
+  private void addToBalanceHistory(Account account, double loanAmount) {
+    BalanceHistory balanceHistory = new BalanceHistory();
+    balanceHistory.setAccountId(account.getId());
+    balanceHistory.setPrincipalBalance(account.getPrincipalBalance());
+    balanceHistory.setLoanAmount(loanAmount);
+    balanceHistory.setInterestAmount(account.getOverdraftInterest());
+    balanceHistory.setTimestamp(LocalDateTime.now());
+    balanceHistoryService.updateBalanceHistory(balanceHistory);
+  }
+
+  // Check if balance becomes negative after transaction
+  private boolean hasNegativeBalance(Account account) {
+    // Retrieve account balance history
+    List<BalanceHistory> balanceHistory = balanceHistoryService.findByAccountId(account.getId());
+
+    // Check if balance becomes negative in history
+    for (BalanceHistory entry : balanceHistory) {
+      if (entry.getLoanAmount() > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 
 }

@@ -8,6 +8,7 @@ import hei.school.digital.bank.model.Transaction;
 import hei.school.digital.bank.model.Transfert;
 import hei.school.digital.bank.repository.TransactionRepository;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import javax.security.auth.login.AccountNotFoundException;
 import lombok.AllArgsConstructor;
@@ -134,6 +135,10 @@ public class TransactionService {
     transaction.setType(Transaction.TransactionType.CREDIT);
     transaction.setDateTime(LocalDateTime.now());
     createTransaction(transaction);
+  }
+
+  public List<Transaction> getTransactionsByDateRange(Date startDate, Date endDate){
+    return transactionRepository.getTransactionsByDateRange(startDate,endDate);
   }
 
 }

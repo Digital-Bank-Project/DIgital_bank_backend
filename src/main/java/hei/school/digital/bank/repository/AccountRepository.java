@@ -19,8 +19,8 @@ public class AccountRepository implements CrudOperations<Account,Long> {
     try {
       Connection connection = PostgresDbConnection.getConnection();
 
-      String sql = "INSERT INTO account (firstName, lastName, dateOfBirth, principalBalance, monthlySalary, accountNumber, accountStatus) " +
-          "VALUES (?, ?, ?, ?, ?, ?, ?)";
+      String sql = "INSERT INTO account (firstName, lastName, dateOfBirth, principalBalance, monthlySalary, accountNumber, overdraftEnabled, overdraftInterest, overdraftStartDate, bank) " +
+          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
       PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
       statement.setString(1, entity.getFirstName());
@@ -29,8 +29,10 @@ public class AccountRepository implements CrudOperations<Account,Long> {
       statement.setDouble(4, entity.getPrincipalBalance());
       statement.setDouble(5, entity.getMonthlySalary());
       statement.setString(6, entity.getAccountNumber());
-      statement.setString(7, entity.getAccountStatus().toString());
-
+      statement.setBoolean(7, entity.isOverdraftEnabled());
+      statement.setDouble(8, entity.getOverdraftInterest());
+      statement.setTimestamp(9, entity.getOverdraftStartDate());
+      statement.setString(10,entity.getBank().toString());
       int rowsInserted = statement.executeUpdate();
 
       if (rowsInserted > 0) {
@@ -69,7 +71,10 @@ public class AccountRepository implements CrudOperations<Account,Long> {
         account.setPrincipalBalance(resultSet.getDouble("principalBalance"));
         account.setMonthlySalary(resultSet.getDouble("monthlySalary"));
         account.setAccountNumber(resultSet.getString("accountNumber"));
-        account.setAccountStatus(Account.AccountStatus.valueOf(resultSet.getString("accountStatus")));        // Assurez-vous de récupérer les autres attributs de l'Account de manière similaire
+        account.setOverdraftEnabled(resultSet.getBoolean("overdraftEnabled"));
+        account.setOverdraftInterest(resultSet.getDouble("overdraftInterest"));
+        account.setOverdraftStartDate(resultSet.getTimestamp("overdraftStartDate"));
+        account.setBank(Account.Bank.valueOf(resultSet.getString("bank")));
         accounts.add(account);
       }
     } catch (SQLException ex) {
@@ -102,9 +107,13 @@ public class AccountRepository implements CrudOperations<Account,Long> {
         account.setPrincipalBalance(resultSet.getDouble("principalBalance"));
         account.setMonthlySalary(resultSet.getDouble("monthlySalary"));
         account.setAccountNumber(resultSet.getString("accountNumber"));
-        account.setAccountStatus(Account.AccountStatus.valueOf(resultSet.getString("accountStatus")));
+        account.setOverdraftEnabled(resultSet.getBoolean("overdraftEnabled"));
+        account.setOverdraftInterest(resultSet.getDouble("overdraftInterest"));
+        account.setOverdraftStartDate(resultSet.getTimestamp("overdraftStartDate"));
+        account.setBank(Account.Bank.valueOf(resultSet.getString("bank")));
+
       } else {
-        System.out.println("The account with the ID "+ id +" does not exist.");
+        System.out.println("The account with the ID " + id + " does not exist.");
       }
     } catch (SQLException ex) {
       ex.printStackTrace();
@@ -114,11 +123,12 @@ public class AccountRepository implements CrudOperations<Account,Long> {
   }
 
 
+
   @Override
   public Account update(Account entity) {
     try (Connection connection = PostgresDbConnection.getConnection();
          PreparedStatement preparedStatement = connection.prepareStatement(
-             "UPDATE account SET firstName = ?, lastName = ?, dateOfBirth = ?, principalBalance = ?, monthlySalary = ?, accountNumber = ?, accountStatus = ? WHERE id = ?")) {
+             "UPDATE account SET firstName = ?, lastName = ?, dateOfBirth = ?, principalBalance = ?, monthlySalary = ?, accountNumber = ?, overdraftEnabled = ?, overdraftInterest = ?, overdraftStartDate = ?, bank = ? WHERE id = ?")) {
 
       preparedStatement.setString(1, entity.getFirstName());
       preparedStatement.setString(2, entity.getLastName());
@@ -126,8 +136,11 @@ public class AccountRepository implements CrudOperations<Account,Long> {
       preparedStatement.setDouble(4, entity.getPrincipalBalance());
       preparedStatement.setDouble(5, entity.getMonthlySalary());
       preparedStatement.setString(6, entity.getAccountNumber());
-      preparedStatement.setString(7, entity.getAccountStatus().toString());
-      preparedStatement.setLong(8, entity.getId());
+      preparedStatement.setBoolean(7, entity.isOverdraftEnabled());
+      preparedStatement.setDouble(8, entity.getOverdraftInterest());
+      preparedStatement.setTimestamp(9, entity.getOverdraftStartDate());
+      preparedStatement.setString(10, entity.getBank().toString());
+      preparedStatement.setLong(11, entity.getId());
 
       int rowsUpdated = preparedStatement.executeUpdate();
 
@@ -160,7 +173,7 @@ public class AccountRepository implements CrudOperations<Account,Long> {
       if (rowsDeleted > 0) {
         System.out.println("The account with the ID "+ id +" has been successfully deleted.");
       } else {
-        System.out.println("The account with the ID "+ id +" does not exist.");
+        System.out.println("The account   with the ID "+ id +" does not exist.");
       }
     } catch (SQLException ex) {
       ex.printStackTrace();

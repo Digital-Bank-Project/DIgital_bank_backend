@@ -149,6 +149,35 @@ public class TransfertRepository implements CrudOperations<Transfert,Long> {
     }
   }
 
+  public List<Transfert> findTransfersByEffectiveDateBeforeAndStatus(LocalDateTime currentDate, Transfert.TransfertStatus status) {
+    List<Transfert> transfers = new ArrayList<>();
+
+    String sql = "SELECT * FROM transfert WHERE effectiveDate <= ? AND status = ?";
+    try (Connection connection = PostgresDbConnection.getConnection();
+         PreparedStatement statement = connection.prepareStatement(sql)) {
+      statement.setTimestamp(1, Timestamp.valueOf(currentDate));
+      statement.setString(2, status.name());
+
+      ResultSet resultSet = statement.executeQuery();
+      while (resultSet.next()) {
+        Transfert transfert = new Transfert();
+        transfert.setId(resultSet.getLong("id"));
+        transfert.setSenderAccountId(resultSet.getLong("senderAccountId"));
+        transfert.setRecipientAccountId(resultSet.getLong("recipientAccountId"));
+        transfert.setAmount(resultSet.getDouble("amount"));
+        transfert.setReason(resultSet.getString("reason"));
+        transfert.setEffectiveDate(resultSet.getTimestamp("effectiveDate").toLocalDateTime());
+        transfert.setRegistrationDate(resultSet.getTimestamp("registrationDate").toLocalDateTime());
+        transfert.setStatus(Transfert.TransfertStatus.valueOf(resultSet.getString("status")));
+        transfert.setLabel(resultSet.getString("label"));
+        transfers.add(transfert);
+      }
+    } catch (SQLException ex) {
+      ex.printStackTrace();
+    }
+
+    return transfers;
+  }
 
 
 }

@@ -139,6 +139,31 @@ public class BalanceHistoryRepository implements CrudOperations<BalanceHistory,L
     }
   }
 
+  public List<BalanceHistory> findByAccountId(Long accountId) {
+    List<BalanceHistory> balanceHistories = new ArrayList<>();
+
+    try (Connection connection = PostgresDbConnection.getConnection()) {
+      String sql = "SELECT * FROM balanceHistory WHERE accountId = ?";
+      PreparedStatement statement = connection.prepareStatement(sql);
+      statement.setLong(1, accountId);
+      ResultSet resultSet = statement.executeQuery();
+
+      while (resultSet.next()) {
+        BalanceHistory balanceHistory = new BalanceHistory();
+        balanceHistory.setId(resultSet.getLong("id"));
+        balanceHistory.setAccountId(resultSet.getLong("accountId"));
+        balanceHistory.setPrincipalBalance(resultSet.getDouble("principalBalance"));
+        balanceHistory.setLoanAmount(resultSet.getDouble("loan_amount"));
+        balanceHistory.setInterestAmount(resultSet.getDouble("interestAmount"));
+        balanceHistory.setTimestamp(resultSet.getTimestamp("timestamp").toLocalDateTime());
+        balanceHistories.add(balanceHistory);
+      }
+    } catch (SQLException ex) {
+      ex.printStackTrace();
+    }
+
+    return balanceHistories;
+  }
 
 
 }

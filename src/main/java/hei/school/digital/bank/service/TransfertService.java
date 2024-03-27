@@ -189,5 +189,32 @@ public class TransfertService {
     transactionService.createTransaction(creditTransaction);
   }
 
+  public void processMultipleTransfers(Long senderAccountId, List<Long> recipientAccountIds, double amount) {
+    // Check if the sender's balance can cover the total amount
+    Account sender = accountService.getAccountById(senderAccountId);
+    if (sender == null || sender.getPrincipalBalance() < amount * recipientAccountIds.size()) {
+      // Handle case where balance is insufficient
+      throw new InsufficientFundsException("Sender's balance is insufficient to process the transfers.");
+    }
+
+    // Create a list of transfers
+    List<Transfert> transfers = new ArrayList<>();
+    for (Long recipientId : recipientAccountIds) {
+      Transfert transfer = new Transfert();
+      transfer.setSenderAccountId(senderAccountId);
+      transfer.setRecipientAccountId(recipientId);
+      transfer.setAmount(amount);
+      // Other transfer attributes and label if needed
+      transfers.add(transfer);
+    }
+
+    // Process each transfer individually
+    for (Transfert transfer : transfers) {
+      processPendingTransfer(transfer);
+    }
+  }
+
+
+
 }
 

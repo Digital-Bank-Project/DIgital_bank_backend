@@ -179,5 +179,33 @@ public class TransfertRepository implements CrudOperations<Transfert,Long> {
     return transfers;
   }
 
+  public List<Transfert> findTransfersBySenderAccountId(Long accountId) {
+    List<Transfert> transferts = new ArrayList<>();
+
+    try (Connection connection = PostgresDbConnection.getConnection()) {
+      String sql = "SELECT * FROM transfert WHERE senderAccountId = ?";
+      PreparedStatement statement = connection.prepareStatement(sql);
+      statement.setLong(1, accountId);
+      ResultSet resultSet = statement.executeQuery();
+
+      while (resultSet.next()) {
+        Transfert transfert = new Transfert();
+        transfert.setId(resultSet.getLong("id"));
+        transfert.setSenderAccountId(resultSet.getLong("senderAccountId"));
+        transfert.setRecipientAccountId(resultSet.getLong("recipientAccountId"));
+        transfert.setAmount(resultSet.getDouble("amount"));
+        transfert.setReason(resultSet.getString("reason"));
+        transfert.setEffectiveDate(resultSet.getTimestamp("effectiveDate").toLocalDateTime());
+        transfert.setRegistrationDate(resultSet.getTimestamp("registrationDate").toLocalDateTime());
+        transfert.setStatus(Transfert.TransfertStatus.valueOf(resultSet.getString("status")));
+        transfert.setLabel(resultSet.getString("label"));
+        transferts.add(transfert);
+      }
+    } catch (SQLException ex) {
+      ex.printStackTrace();
+    }
+
+    return transferts;
+  }
 
 }

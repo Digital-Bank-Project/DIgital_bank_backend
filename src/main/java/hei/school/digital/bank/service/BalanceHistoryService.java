@@ -37,6 +37,8 @@ public class BalanceHistoryService {
     return balanceHistoryRepository.findByAccountId(accountId);
   }
 
-
+  public BalanceHistory findLastBalanceHistoryByAccountId(Long accountId) {
+    return balanceHistoryRepository.findLastBalanceHistoryByAccountId(accountId);
+  }
 
 }

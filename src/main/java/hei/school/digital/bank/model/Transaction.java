@@ -22,7 +22,7 @@ public class Transaction {
   private LocalDateTime dateTime;
   private TransactionType type;
   private Long accountId;
-
+  private String category;
 
   public enum TransactionType {
     DEBIT, CREDIT

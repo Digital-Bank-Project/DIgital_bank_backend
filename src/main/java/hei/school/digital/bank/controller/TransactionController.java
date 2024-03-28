@@ -70,9 +70,9 @@ public class TransactionController {
   }
 
   @PostMapping("/withdraw/{accountId}")
-  public ResponseEntity<String> withdrawAmount(@PathVariable Long accountId, @RequestParam double amount, @RequestParam String motive) {
+  public ResponseEntity<String> withdrawAmount(@PathVariable Long accountId, @RequestParam double amount, @RequestParam String motive, @RequestParam String category) {
     try {
-      transactionService.withdrawAmount(accountId, amount, motive);
+      transactionService.withdrawAmount(accountId, amount, motive, category);
       return ResponseEntity.ok("Withdrawal successful.");
     } catch (AccountNotFoundException e) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -83,9 +83,10 @@ public class TransactionController {
   @PostMapping("/deposit/{accountId}")
   public ResponseEntity<String> depositAmount(@PathVariable Long accountId,
                                               @RequestParam double amount,
-                                              @RequestParam String reason) {
+                                              @RequestParam String reason,
+                                              @RequestParam String category) {
     try {
-      transactionService.depositAmount(accountId, amount, reason);
+      transactionService.depositAmount(accountId, amount, reason, category);
       return ResponseEntity.ok("Amount deposited successfully.");
     } catch (AccountNotFoundException e) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

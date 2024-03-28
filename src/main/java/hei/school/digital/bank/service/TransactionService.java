@@ -143,5 +143,8 @@ public class TransactionService {
     return transactionRepository.getTransactionsByDateRange(startDate,endDate);
   }
 
+  public List<Transaction> getTransactionsByAccountId(Long accountId){
+    return transactionRepository.getTransactionsByAccountId(accountId);
+  }
 
 }

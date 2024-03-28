@@ -50,7 +50,7 @@ public class TransactionService {
     transactionRepository.deleteById(id);
   }
 
-  public void withdrawAmount(Long accountId, double amount, String motive) throws
+  public void withdrawAmount(Long accountId, double amount, String motive, String category) throws
       AccountNotFoundException {
     Account account = accountService.getAccountById(accountId);
 
@@ -74,6 +74,7 @@ public class TransactionService {
       transaction.setAmount(amount);
       transaction.setMotive(motive);
       transaction.setType(Transaction.TransactionType.DEBIT);
+      transaction.setCategory(category);
       // Réalisez le retrait en mettant à jour le solde du compte
       accountService.withdrawFromAccount(account, amount);
       // Enregistrez la transaction
@@ -83,7 +84,7 @@ public class TransactionService {
     }
   }
 
-  public void depositAmount(Long accountId, double amount, String reason) throws AccountNotFoundException {
+  public void depositAmount(Long accountId, double amount, String reason, String category) throws AccountNotFoundException {
     Account account = accountService.getAccountById(accountId);
 
     // Vérifier si le compte existe
@@ -134,11 +135,13 @@ public class TransactionService {
     transaction.setMotive(reason);
     transaction.setType(Transaction.TransactionType.CREDIT);
     transaction.setDateTime(LocalDateTime.now());
+    transaction.setCategory(category);
     createTransaction(transaction);
   }
 
   public List<Transaction> getTransactionsByDateRange(Date startDate, Date endDate){
     return transactionRepository.getTransactionsByDateRange(startDate,endDate);
   }
+
 
 }

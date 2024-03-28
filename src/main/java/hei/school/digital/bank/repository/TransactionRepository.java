@@ -26,13 +26,14 @@ public class TransactionRepository implements CrudOperations<Transaction,Long> {
   @Override
   public Transaction create(Transaction transaction) {
     try (Connection connection = PostgresDbConnection.getConnection()) {
-      String sql = "INSERT INTO transaction (amount, motive, dateTime, type, accountId) VALUES (?, ?, ?, ?, ?)";
+      String sql = "INSERT INTO transaction (amount, motive, dateTime, type, accountId, category) VALUES (?, ?, ?, ?, ?, ?)";
       PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
       statement.setDouble(1, transaction.getAmount());
       statement.setString(2,transaction.getMotive());
       statement.setTimestamp(3, Timestamp.valueOf(transaction.getDateTime()));
       statement.setString(4, transaction.getType().toString());
       statement.setLong(5, transaction.getAccountId());
+      statement.setString(6,transaction.getCategory());
 
       int rowsInserted = statement.executeUpdate();
 
@@ -71,6 +72,7 @@ public class TransactionRepository implements CrudOperations<Transaction,Long> {
         transaction.setDateTime(resultSet.getTimestamp("dateTime").toLocalDateTime());
         transaction.setType(Transaction.TransactionType.valueOf(resultSet.getString("type")));
         transaction.setAccountId(resultSet.getLong("accountId"));
+        transaction.setCategory(resultSet.getString("category"));
         transactions.add(transaction);
       }
     } catch (SQLException e) {
@@ -99,6 +101,7 @@ public class TransactionRepository implements CrudOperations<Transaction,Long> {
         transaction.setDateTime(resultSet.getTimestamp("date_time").toLocalDateTime());
         transaction.setType(Transaction.TransactionType.valueOf(resultSet.getString("type")));
         transaction.setAccountId(resultSet.getLong("account_id"));
+        transaction.setCategory(resultSet.getString("category"));
       }
     } catch (SQLException e) {
       e.printStackTrace();
@@ -110,7 +113,7 @@ public class TransactionRepository implements CrudOperations<Transaction,Long> {
   public Transaction update(Transaction entity) {
     try (Connection connection = PostgresDbConnection.getConnection();
          PreparedStatement preparedStatement = connection.prepareStatement(
-             "UPDATE transaction SET amount = ?, motive = ?, dateTime = ?, type = ?, accountId = ? WHERE id = ?")) {
+             "UPDATE transaction SET amount = ?, motive = ?, dateTime = ?, type = ?, accountId = ?, category = ? WHERE id = ?")) {
 
       preparedStatement.setDouble(1, entity.getAmount());
       preparedStatement.setString(2,entity.getMotive());
@@ -118,6 +121,7 @@ public class TransactionRepository implements CrudOperations<Transaction,Long> {
       preparedStatement.setString(4, entity.getType().toString());
       preparedStatement.setLong(5, entity.getAccountId());
       preparedStatement.setLong(6, entity.getId());
+      preparedStatement.setString(7,entity.getCategory());
 
       int rowsUpdated = preparedStatement.executeUpdate();
 
@@ -180,6 +184,7 @@ public class TransactionRepository implements CrudOperations<Transaction,Long> {
         transaction.setDateTime(resultSet.getTimestamp("dateTime").toLocalDateTime());
         transaction.setType(Transaction.TransactionType.valueOf(resultSet.getString("type")));
         transaction.setAccountId(resultSet.getLong("accountId"));
+        transaction.setCategory(resultSet.getString("category"));
         transactions.add(transaction);
       }
     } catch (SQLException ex) {
@@ -188,4 +193,30 @@ public class TransactionRepository implements CrudOperations<Transaction,Long> {
 
     return transactions;
   }
+
+  public List<Transaction> getTransactionsByAccountId(Long accountId) {
+    List<Transaction> transactions = new ArrayList<>();
+    try (Connection connection = PostgresDbConnection.getConnection()){
+      String sql = "SELECT * FROM transactions WHERE accountId = ?";
+         PreparedStatement statement = connection.prepareStatement(sql);
+      statement.setLong(1, accountId);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        while (resultSet.next()) {
+          Transaction transaction = new Transaction();
+          transaction.setId(resultSet.getLong("id"));
+          transaction.setAmount(resultSet.getDouble("amount"));
+          transaction.setMotive(resultSet.getString("motive"));
+          transaction.setDateTime(resultSet.getTimestamp("dateTime").toLocalDateTime());
+          transaction.setType(Transaction.TransactionType.valueOf(resultSet.getString("type")));
+          transaction.setAccountId(resultSet.getLong("accountId"));
+          transaction.setCategory(resultSet.getString("category"));
+          transactions.add(transaction);
+        }
+      }
+    } catch (SQLException ex) {
+      ex.printStackTrace();
+    }
+    return transactions;
+  }
+
 }
